@@ -90,6 +90,8 @@
 				} else {
 					reject(Response.error())
 				}
+
+			
 			} catch(error) {
 				reject(error)
 			}
@@ -108,34 +110,36 @@
 			params.append('method', 1);
 
 			api(params).then( res => {
-				var output = "";
-				bpms = JSON.parse(res);
+				try {
+					bpms = JSON.parse(res);
 
-				const outbopomo = document.getElementById('outbopomo');
+					const outbopomo = document.getElementById('outbopomo');
 
-				bpmArray = [];
-				outbopomo.innerHTML = "";
+					bpmArray = [];
+					outbopomo.innerHTML = "";
 
-				bpms.forEach( (bpm,idx) => {
-					const div = document.createElement('div');
-					div.style.margin = '4px';
-					div.style.border = '1px solid';
-					div.style.alignSelf = 'center';
-					var c = 0;
-					div.innerHTML = bpm[c];
-					bpmArray[idx] = bpm[c];
+					bpms.forEach( (bpm,idx) => {
+						const div = document.createElement('div');
+						div.style.margin = '4px';
+						div.style.border = '1px solid';
+						div.style.alignSelf = 'center';
+						var c = 0;
+						div.innerHTML = bpm[c];
+						bpmArray[idx] = bpm[c];
 
-					if(bpm.length > 1) {
-						div.style.backgroundColor = 'yellow';
-						div.addEventListener('click', e => {
-							const newBPM = bpm[(++c)%bpm.length];
-							div.innerHTML = newBPM;
-							bpmArray[idx] = newBPM;
-						})
-					}
-					outbopomo.appendChild(div);
-				})
-
+						if(bpm.length > 1) {
+							div.style.backgroundColor = 'yellow';
+							div.addEventListener('click', e => {
+								const newBPM = bpm[(++c)%bpm.length];
+								div.innerHTML = newBPM;
+								bpmArray[idx] = newBPM;
+							})
+						}
+						outbopomo.appendChild(div);
+					})
+				} catch(error) {
+					console.log(error);
+				}
 
 			}).catch(error => {
 				console.log(error);
