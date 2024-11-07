@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="jscolor.js"></script>
+<meta charset="utf-8">
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=5.0'>
+<title>注音文圖片產生器</title>
+<style>
+	.tool-bar {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+		padding: 4px;
+		box-sizing: border-box;
+	}
+
+	.settings {
+		padding: 0;
+	}
+	
+@media(max-width: 600px) {
+	.tool-bar {
+		flex-direction: column;
+	}
+	.settings {
+		
+		
+		padding: 4px 0;
+	}
+	
+}
+</style>
+</head>
+<body style='margin: 0;'>
+<div style='width:100%;display:flex;justify-content:center;box-sizing: border-box;'>
+	<div style='display: flex;flex-direction: column;justify-content: center; align-items: center; width:100%;max-width: 960px;padding: 8px;box-sizing: border-box;'>
+		<div style='width: 100%;padding: 4px;'>
+			<textarea id='input' rows=10 style='width: 100%;padding:8px;resize: none;box-sizing: border-box;'  placeholder='請輸入中文'></textarea>
+		</div>
+		<div style='width: 100%;text-align: right;box-sizing: border-box;padding: 4px;'>
+			<button id='tobpm' style='width:100%;'>產生注音</button>
+		</div>
+
+		<div style='display: flex; width:100%;height:200px;margin:4px;padding: 4px;flex-wrap: wrap;overflow: auto;border: 1px dotted;border-radius: 4px;' id='outbopomo' >
+		</div>
+		<div class='tool-bar' id='t2'>
+			<div style='display: flex;justify-content: space-between;width:100%;align-items: center;' class='settings'>	
+				<div style='display: flex;'><div>寬度</div><div style='margin-left: 4px;'><input id='imgwidth' value=600 style='width:50px;' type="number" pattern="[0-9]*" inputmode="numeric"/></div></div>
+				<div style='display: flex;'><div>字體</div><div style='margin-left: 4px;'><input id='textsize' value=28 style='width:50px;' type="number" pattern="[0-9]*" inputmode="numeric"/></div></div>
+			</div>
+			<div style='display: flex;width:100%;margin-left: 8px;justify-content: space-between; align-items: center;' class='settings'>	
+				<div class='' style='box-sizing: border-box;'><div style='width: max-content;'><input id='nosign' type=checkbox /><label for='nosign' >去聲符</label></div></div>
+				<div style='display: flex;'><div style='width:fit-content;'>顏色</div><div style='margin-left: 4px;'><input id='imgcolor' data-jscolor="{value: '#0B2CFF'}"  style='width: 70px;border-width: 1px'  inputmode="none"/></div></div>
+			</div>
+			<div style='display: flex;width:100%;margin-left: 8px;justify-content: center; align-items: center;' class='settings'>	
+				<div>
+					<input type=radio id='left' name='format' value=1 checked /><label for='left'><img src='format-align-left.png' width=32 height=32 style='vertical-align: middle;'></label>
+					<input type=radio id='center' name='format' value=2 /><label for='center'><img src='format-align-center.png' width=32 height=32 style='vertical-align: middle;'></label>
+					<input type=radio id='right' name='format' value=3 /><label for='right'><img src='format-align-right.png' width=32 height=32 style='vertical-align: middle;'></label>
+				</div>
+			</div>
+			<div style='display: flex;align-items: center;' class='settings'>
+				<input type=radio id='font1' name='font' value=1 checked /><label for='font1'><img src='1.png' style='vertical-align: middle;'></label>
+				<input type=radio id='font2' name='font' value=2 /><label for='font2'><img src='2.png' style='vertical-align: middle;'></label>
+			</div>
+		</div>
+		<div style='display: flex;width: 100%;padding: 4px;'>
+				<button id='tobpmimg' style='width:100%;'>產生圖片</button>
+			</div>
+		<div id='outputarea' style='width: 100%;padding: 4px;display: none;justify-content: center;'>
+			<div id='output' style='border: 1px solid;'></div>
+		</div>
+	</div>
+</div>
+
+<script>
+	const api = params => {
+		const url = "b.php";
+		
+		return new Promise( async (resolve, reject) => {
+			try {
+				const res = await fetch(url, {
+					method: 'post',
+					body: params
+				})
+			
+				if(res.ok) {
+					resolve(res.text())
+				} else {
+					reject(res.error())
+				}
+			} catch(error) {
+				reject(error)
+			}
+
+		} );
+	}
+
+	var bpmArray = [];
+	var bpms = null;
+
+	document.getElementById('tobpm').addEventListener('click', evt => {
+		const text = document.getElementById('input').value;
+		if(text && text.trim().length > 0) {
+			const params = new FormData();
+			params.append('text', text);
+			params.append('method', 1);
+
+			api(params).then( res => {
+				var output = "";
+				bpms = JSON.parse(res);
+
+				const outbopomo = document.getElementById('outbopomo');
+
+				bpmArray = [];
+				outbopomo.innerHTML = "";
+
+				bpms.forEach( (bpm,idx) => {
+					const div = document.createElement('div');
+					div.style.margin = '4px';
+					div.style.border = '1px solid';
+					div.style.alignSelf = 'center';
+					var c = 0;
+					div.innerHTML = bpm[c];
+					bpmArray[idx] = bpm[c];
+
+					if(bpm.length > 1) {
+						div.style.backgroundColor = 'yellow';
+						div.addEventListener('click', e => {
+							const newBPM = bpm[(++c)%bpm.length];
+							div.innerHTML = newBPM;
+							bpmArray[idx] = newBPM;
+						})
+					}
+					outbopomo.appendChild(div);
+				})
+
+
+			}).catch(error => {
+				console.log(error);
+			})
+
+		}
+	})
+
+	document.getElementById('tobpmimg').addEventListener('click', evt => {
+		
+		if(bpmArray.length > 0) {
+			var imgWidth = document.getElementById('imgwidth').value;
+
+			const params = new FormData();
+			var newBPMs = "";
+			bpmArray.forEach(bpm => {
+				newBPMs += bpm + ",";
+			})
+			params.append('bopomo', newBPMs);
+
+			if(imgWidth && imgWidth.length > 0) {
+				params.append('imgwidth', imgWidth);
+			}
+			params.append('imgcolor', document.getElementById('imgcolor').value);
+			const font = document.querySelector("input[type='radio'][name=font]:checked").value;
+			params.append('font', font);
+			params.append('fontsize', document.getElementById('textsize').value);
+			params.append('nosign', document.getElementById('nosign').checked);
+			const format = document.querySelector("input[type='radio'][name=format]:checked").value;
+			params.append('format', format);
+			params.append('method', 2);
+
+			api(params).then(res => {
+				document.getElementById('output').innerHTML = res;
+				document.getElementById('outputarea').style.display = 'flex';
+			}).catch(error => {
+				console.log(error);
+			})
+		}
+	})
+
+	
+</script>
+</body>
+</html>
