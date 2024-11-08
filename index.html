@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script src="jscolor.js"></script>
+<!-- <script src="jscolor.js"></script> -->
 <meta charset="utf-8">
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=5.0'>
 <title>注音文圖片產生器</title>
@@ -57,7 +57,7 @@
 			</div>
 			<div style='display: flex;width:100%;margin-left: 8px;justify-content: space-between; align-items: center;' class='settings'>	
 				<div class='' style='box-sizing: border-box;'><div style='width: max-content;'><input id='nosign' type=checkbox /><label for='nosign' >去聲符</label></div></div>
-				<div style='display: flex;'><div style='width:fit-content;'>顏色</div><div style='margin-left: 4px;'><input id='imgcolor' data-jscolor="{value: '#0B2CFF'}"  style='width: 70px;border-width: 1px'  inputmode="none"/></div></div>
+				<div style='display: flex;'><div style='width:fit-content;'>顏色</div><div style='margin-left: 4px;'><input type=color id='imgcolor' value='#0B2CFF' style='width: 60px;border-width: 1px'  inputmode="none"/></div></div>
 			</div>
 			<div style='display: flex;width:100%;margin-left: 8px;justify-content: center; align-items: center;' class='settings'>	
 				<div>
@@ -103,6 +103,38 @@
 			}
 
 		} );
+	}
+
+	const submit = () => {
+		if(bpmArray.length > 0) {
+			var imgWidth = document.getElementById('imgwidth').value;
+
+			const params = new FormData();
+			var newBPMs = "";
+			bpmArray.forEach(bpm => {
+				newBPMs += bpm + ",";
+			})
+			params.append('bopomo', newBPMs);
+
+			if(imgWidth && imgWidth.length > 0) {
+				params.append('imgwidth', imgWidth);
+			}
+			params.append('imgcolor', document.getElementById('imgcolor').value);
+			const font = document.querySelector("input[type='radio'][name=font]:checked").value;
+			params.append('font', font);
+			params.append('fontsize', document.getElementById('textsize').value);
+			params.append('nosign', document.getElementById('nosign').checked);
+			const format = document.querySelector("input[type='radio'][name=format]:checked").value;
+			params.append('format', format);
+			params.append('method', 2);
+
+			api(params).then(res => {
+				document.getElementById('output').innerHTML = res;
+				document.getElementById('outputarea').style.display = 'flex';
+			}).catch(error => {
+				console.log(error);
+			})
+		}
 	}
 
 	var bpmArray = [];
@@ -154,38 +186,19 @@
 		}
 	})
 
+
 	document.getElementById('tobpmimg').addEventListener('click', evt => {
-		
-		if(bpmArray.length > 0) {
-			var imgWidth = document.getElementById('imgwidth').value;
+		submit();
+	});
 
-			const params = new FormData();
-			var newBPMs = "";
-			bpmArray.forEach(bpm => {
-				newBPMs += bpm + ",";
-			})
-			params.append('bopomo', newBPMs);
-
-			if(imgWidth && imgWidth.length > 0) {
-				params.append('imgwidth', imgWidth);
-			}
-			params.append('imgcolor', document.getElementById('imgcolor').value);
-			const font = document.querySelector("input[type='radio'][name=font]:checked").value;
-			params.append('font', font);
-			params.append('fontsize', document.getElementById('textsize').value);
-			params.append('nosign', document.getElementById('nosign').checked);
-			const format = document.querySelector("input[type='radio'][name=format]:checked").value;
-			params.append('format', format);
-			params.append('method', 2);
-
-			api(params).then(res => {
-				document.getElementById('output').innerHTML = res;
-				document.getElementById('outputarea').style.display = 'flex';
-			}).catch(error => {
-				console.log(error);
-			})
-		}
+	['imgcolor', 'imgwidth', 'textsize', 'nosign', 'left', 'center', 'right', 'font1', 'font2'].forEach( elm => {
+		document.getElementById(elm).addEventListener('change', evt => {
+			submit();
+		})
 	})
+
+	
+
 
 	
 </script>

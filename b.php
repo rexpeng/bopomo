@@ -135,11 +135,17 @@ function toZYImage($zouyi, $width=600, $color='#626262', $font=1, $textSize=28, 
 			continue;
 		}
 
-		if($nosign) {
-			$zy = str_replace(["ˊ","ˇ","ˋ","˙"], "", $zy);
+		// if($nosign && in_array($zy, ["ˊ","ˇ","ˋ","˙"])) {
+		// 	//$zy = str_replace(["ˊ","ˇ","ˋ","˙"], "", $zy);
+		// 	continue;
+		// }
+
+		if(in_array($zy, ["ˊ","ˇ","ˋ","˙"])) {
+			if(!$nosign) {
+				$line .= $zy;
+			}
+			continue;
 		}
-
-
 		$bbox = calculateTextBox($zy, $fontname, $textSize, 0);
 
 		$w = $bbox['width'];
@@ -159,7 +165,8 @@ function toZYImage($zouyi, $width=600, $color='#626262', $font=1, $textSize=28, 
 
 	$maxWidth = 0;
 	foreach($lines as $line) {
-		$bbox = calculateTextBox($line, $fontname, $textSize, 0);
+		$tmp = str_replace(["ˊ","ˇ","ˋ","˙"], "", $line);
+		$bbox = calculateTextBox($tmp, $fontname, $textSize, 0);
 		$maxWidth = max($bbox['width'], $maxWidth);
 	}
 
@@ -180,7 +187,23 @@ function toZYImage($zouyi, $width=600, $color='#626262', $font=1, $textSize=28, 
 				$x = ($maxWidth-$bbox['width'])/2;
 				break;
 		}
-		imagettftext($img, $textSize, 0, $x, $y+$bbox['height'], $textColor, $fontname, $line);
+
+		//imagettftext($img, $textSize, 0, $x, $y+$bbox['height'], $textColor, $fontname, $line);
+
+		$words = preg_split('//u', $line, null, PREG_SPLIT_NO_EMPTY);
+		foreach($words as $word) {
+			$wbox = calculateTextBox($word, $fontname, $textSize, 0);
+			if(in_array($word, ["ˊ","ˇ","ˋ"])) {
+				$x -= $wbox['width'];
+			}
+			if($word === '˙') {
+				imagettftext($img, $textSize, 0, $x, $y+$bbox['height'], $textColor, $fontname, $word);
+				continue;
+			}
+			imagettftext($img, $textSize, 0, $x, $y+$bbox['height'], $textColor, $fontname, $word);
+			$x += $wbox['width'];
+		}
+
 		$y += $bbox['height']+$lineSpace;
 	}
 
