@@ -81,7 +81,7 @@ function calculateTextBox($text,$fontFile,$fontSize,$fontAngle) {
     width, height: dimension of the image you have to create
     *************/
     //$rect = imagettfbbox($fontSize,$fontAngle,$fontFile,$text);
-    $rect = imageftbbox($fontSize,$fontAngle,$fontFile,$text);
+    $rect = imagettfbbox($fontSize,$fontAngle,$fontFile,$text);
 
    
     $minX = min(array($rect[0],$rect[2],$rect[4],$rect[6]));
@@ -90,8 +90,8 @@ function calculateTextBox($text,$fontFile,$fontSize,$fontAngle) {
     $maxY = max(array($rect[1],$rect[3],$rect[5],$rect[7]));
    
     return array(
-     "left"   => abs($minX) - 1,
-     "top"    => abs($minY) - 1,
+     "left"   => abs($minX),
+     "top"    => abs($minY),
      "width"  => $maxX - $minX,
      "height" => $maxY - $minY,
      "box"    => $rect
@@ -135,18 +135,12 @@ function toZYImage($zouyi, $width=600, $color='#626262', $font=1, $textSize=28, 
 			continue;
 		}
 
-		// if($nosign && in_array($zy, ["ˊ","ˇ","ˋ","˙"])) {
-		// 	//$zy = str_replace(["ˊ","ˇ","ˋ","˙"], "", $zy);
-		// 	continue;
-		// }
-
-		if(in_array($zy, ["ˊ","ˇ","ˋ","˙"])) {
-			if(!$nosign) {
-				$line .= $zy;
-			}
-			continue;
+		if($nosign) {
+			$zy = str_replace(["ˊ","ˇ","ˋ","˙"], "", $zy);
 		}
-		$bbox = calculateTextBox($zy, $fontname, $textSize, 0);
+
+		$tmp = str_replace(["ˊ","ˇ","ˋ","˙"], "", $zy);
+		$bbox = calculateTextBox($tmp, $fontname, $textSize, 0);
 
 		$w = $bbox['width'];
 
@@ -158,24 +152,32 @@ function toZYImage($zouyi, $width=600, $color='#626262', $font=1, $textSize=28, 
 		} 
 		$line .= $zy;
 		$x += $w;
+		
 	}
 	if(!empty($line)) {
 		$lines[] = $line;
 	}
 
+	$wordSpace = 0;
 	$maxWidth = 0;
 	foreach($lines as $line) {
+		//echo $line.'<br>';
 		$tmp = str_replace(["ˊ","ˇ","ˋ","˙"], "", $line);
+		$words = count(preg_split('//u', $tmp, null, PREG_SPLIT_NO_EMPTY));
 		$bbox = calculateTextBox($tmp, $fontname, $textSize, 0);
-		$maxWidth = max($bbox['width'], $maxWidth);
+		$maxWidth = max($bbox['width']+($words-1)*$wordSpace, $maxWidth);
 	}
 
+	$widthWord = [1=> ['ㄏ', 'ㄞ', 'ㄉ', 'ㄕ', 'ㄗ', 'ㄌ'], 2=>['ㄉ', 'ㄌ']];
 	$x = 0;
-	$y = 0;
+	$y = 15;
 	
-	$lineSpace = 4;
+	$lineSpace = 10;
+	
 	foreach($lines as $line) {
-		$bbox = calculateTextBox($line, $fontname, $textSize, 0);
+		$tmp = str_replace(["ˊ","ˇ","ˋ","˙"], "", $line);
+		// $tmp = $line;
+		$bbox = calculateTextBox($tmp, $fontname, $textSize, 0);
 		switch($format) {
 			case 1:
 				$x = 0;
@@ -187,21 +189,37 @@ function toZYImage($zouyi, $width=600, $color='#626262', $font=1, $textSize=28, 
 				$x = ($maxWidth-$bbox['width'])/2;
 				break;
 		}
+		// echo $bbox['width'].'<br>';
+		// imagerectangle($img, $x, $y, $x+$bbox['width'], $y+$bbox['height'], $textColor);
 
-		//imagettftext($img, $textSize, 0, $x, $y+$bbox['height'], $textColor, $fontname, $line);
+		// imagettftext($img, $textSize, 0, $x, $y+$bbox['top'], $textColor, $fontname, $tmp);
+		
+		// $y += $bbox['height']+$lineSpace;
 
 		$words = preg_split('//u', $line, null, PREG_SPLIT_NO_EMPTY);
 		foreach($words as $word) {
+			//$word = trim($word);
 			$wbox = calculateTextBox($word, $fontname, $textSize, 0);
+			// print_r($wbox);
+			// echo $wbox['width'];
 			if(in_array($word, ["ˊ","ˇ","ˋ"])) {
-				$x -= $wbox['width'];
-			}
-			if($word === '˙') {
-				imagettftext($img, $textSize, 0, $x, $y+$bbox['height'], $textColor, $fontname, $word);
+				imagettftext($img, $textSize, 0, $x-$wbox['width'], $y+$wbox['top']-8, $textColor, $fontname, $word);
 				continue;
 			}
-			imagettftext($img, $textSize, 0, $x, $y+$bbox['height'], $textColor, $fontname, $word);
-			$x += $wbox['width'];
+			if($word === '˙') {
+				imagettftext($img, $textSize, 0, $x+$wbox['width'], $y+$wbox['top']-8, $textColor, $fontname, $word);
+				continue;
+			}
+			$w = $wbox['width'];
+
+			if(in_array($word, $widthWord[$font])) {
+				$w -= ceil($textSize * 10 / 25);
+			}
+			
+			// echo '/'.$w.'<br>';
+			// imagerectangle($img, $x, $y, $x+$w, $y+$wbox['height'], $textColor);
+			imagettftext($img, $textSize, 0, $x, $y+$wbox['top'], $textColor, $fontname, $word);
+			$x += $w + $wordSpace;
 		}
 
 		$y += $bbox['height']+$lineSpace;
@@ -215,7 +233,7 @@ function toZYImage($zouyi, $width=600, $color='#626262', $font=1, $textSize=28, 
 	imagecolortransparent($cImg, $white);
 	imagefill($cImg, 0, 0, $white);
 	$cX = floor(($width - $maxWidth) / 2);
-	imagecopy($cImg, $img, $cX, 0, 0, 0, $width, $cImgHeight);
+	imagecopy($cImg, $img, $cX, floor($bbox['height']/2), 0, 0, $width, $cImgHeight);
 	//$cImg = imagecrop($img, ['x'=>0, 'y'=>0, 'width'=>$width, 'height'=>$y+20]);
 	//$cImg = imagecropauto($img); //, IMG_CROP_AUTO);
 	//imageSaveAlpha($cImg, true);
