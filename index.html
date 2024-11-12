@@ -71,9 +71,9 @@
 				<input type=radio id='font2' name='font' value=2 /><label for='font2'><img src='2.png' style='vertical-align: middle;'></label>
 			</div>
 		</div>
-		<div class='row'>
-				<button id='tobpmimg' style='width:100%;'>產生圖片</button>
-			</div>
+		<!-- <div class='row'>
+			<button id='tobpmimg' style='width:100%;'>產生圖片</button>
+		</div> -->
 		<div id='outputarea' style='width: 100%;padding: 4px;display: none;justify-content: center;'>
 			<div id='output' style='border: 1px solid;'></div>
 		</div>
@@ -171,10 +171,13 @@
 								const newBPM = bpm[(++c)%bpm.length];
 								div.innerHTML = newBPM;
 								bpmArray[idx] = newBPM;
+
+								submit();
 							})
 						}
 						outbopomo.appendChild(div);
 					})
+					submit();
 				} catch(error) {
 					console.log(error);
 				}
@@ -184,12 +187,12 @@
 			})
 
 		}
-	})
-
-
-	document.getElementById('tobpmimg').addEventListener('click', evt => {
-		submit();
 	});
+
+
+	// document.getElementById('tobpmimg').addEventListener('click', evt => {
+	// 	submit();
+	// });
 
 	['imgcolor', 'imgwidth', 'textsize', 'nosign', 'left', 'center', 'right', 'font1', 'font2'].forEach( elm => {
 		document.getElementById(elm).addEventListener('change', evt => {
